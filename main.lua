@@ -1,4 +1,6 @@
 function love.load()
+  game_over = false
+
   tilesize = 100 -- pixels
   gridsize = 6 -- tiles
   margin = 10 -- pixels
@@ -16,7 +18,7 @@ function love.load()
   endy = gridsize
 
   flowamt = 0 -- in tiles (fractional)
-  flowspeed = 0.005 -- in tiles / second
+  flowspeed = 0.2 -- in tiles / second
 
   whatfont = love.graphics.newFont(48)
   love.graphics.setFont(whatfont)
@@ -82,6 +84,10 @@ function love.keypressed(key)
   elseif key == 'up' then
     y = math.max(y - 1, 1)
   elseif key == 'space' then
+    if flow[x][y].filled > 0 then
+      return
+    end
+
     if grid[x][y].hidden then
       grid[x][y].hidden = false
     else
@@ -112,9 +118,13 @@ function printcentered(text, xpos, ypos)
   )
 end
 
-function drawtile(tile, i, j)
+function drawtile(tile, i, j, filled, from)
   xpos = pixels(i)
   ypos = pixels(j)
+
+  if not filled then
+    filled = 0
+  end
 
   smallr = tilesize / 4
   bigr = 3 * tilesize / 4
@@ -126,46 +136,84 @@ function drawtile(tile, i, j)
     love.graphics.setColor(grey)
     love.graphics.rectangle(
       'fill', xpos, ypos + (tilesize / 4), tilesize, tilesize / 2)
-    -- love.graphics.setColor(aquamarine)
-    -- love.graphics.rectangle(
-    --   'fill', xpos, ypos + (tilesize / 4), tilesize * flowamt, tilesize / 2)
+
+    love.graphics.setColor(aquamarine)
+    fillwidth = tilesize * filled
+    if from == LEFT then
+      love.graphics.rectangle(
+        'fill', xpos, ypos + (tilesize / 4), fillwidth, tilesize / 2)
+    elseif from == RIGHT then
+      love.graphics.rectangle(
+        'fill', xpos + (tilesize - fillwidth), ypos + (tilesize / 4), fillwidth, tilesize / 2)
+    end
+
   elseif tile.kind == VERTICAL then
     love.graphics.setColor(grey)
     love.graphics.rectangle(
       'fill', xpos + (tilesize / 4), ypos, tilesize / 2, tilesize)
-    -- love.graphics.setColor(aquamarine)
-    -- love.graphics.rectangle(
-    --   'fill', xpos + (tilesize / 4), ypos, tilesize / 2, tilesize * flowamt)
+
+    love.graphics.setColor(aquamarine)
+    fillheight = tilesize * filled
+    if from == UP then
+      love.graphics.rectangle(
+        'fill', xpos + (tilesize / 4), ypos, tilesize / 2, fillheight)
+    elseif from == DOWN then
+      love.graphics.rectangle(
+        'fill', xpos + (tilesize / 4), ypos + (tilesize - fillheight), tilesize / 2, fillheight)
+    end
+
   else
     if tile.kind == LEFTUP then
       centerx = xpos
       centery = ypos
-      angfrom = 0
-      argto = math.pi / 2
+      if from == UP then
+        angfrom = 0
+        angto = math.pi / 2
+      else
+        angto = 0
+        angfrom = math.pi / 2
+      end
     elseif tile.kind == LEFTDOWN then
       centerx = xpos
       centery = ypos + tilesize
-      angfrom = 3 * math.pi / 2
-      argto = 2 * math.pi
+      if from == LEFT then
+        angfrom = 3 * math.pi / 2
+        angto = 2 * math.pi
+      else
+        angto = 3 * math.pi / 2
+        angfrom = 2 * math.pi
+      end
     elseif tile.kind == RIGHTUP then
       centerx = xpos + tilesize
       centery = ypos
-      angfrom = math.pi / 2
-      argto = math.pi
+      if from == RIGHT then
+        angfrom = math.pi / 2
+        angto = math.pi
+      else
+        angto = math.pi / 2
+        angfrom = math.pi
+      end
     elseif tile.kind == RIGHTDOWN then
       centerx = xpos + tilesize
       centery = ypos + tilesize
-      angfrom = math.pi
-      argto = 3 * math.pi / 2
+      if from == DOWN then
+        angfrom = math.pi
+        angto = 3 * math.pi / 2
+      else
+        angto = math.pi
+        angfrom = 3 * math.pi / 2
+      end
     end
     love.graphics.setColor(grey)
-    love.graphics.arc('fill', centerx, centery, bigr, angfrom, argto)
-    -- love.graphics.setColor(aquamarine)
-    -- love.graphics.arc(
-    --   'fill', centerx, centery, bigr,
-    --   angfrom, angfrom + (argto - angfrom) * flowamt)
+    love.graphics.arc('fill', centerx, centery, bigr, angfrom, angto)
+
+    love.graphics.setColor(aquamarine)
+    love.graphics.arc(
+      'fill', centerx, centery, bigr,
+      angfrom, angfrom + (angto - angfrom) * filled)
+
     love.graphics.setColor(black)
-    love.graphics.arc('fill', centerx, centery, smallr, angfrom, argto)
+    love.graphics.arc('fill', centerx, centery, smallr, angfrom, angto)
   end
 
   love.graphics.setColor(white)
@@ -173,19 +221,69 @@ function drawtile(tile, i, j)
 end
 
 function love.update(dt)
-  flowamt = flowamt + flowspeed
-  if flowamt >= 1 then
-    flowamt = 0
+  if game_over then
+    return
   end
+
+  flowamt = flowamt + flowspeed * dt
+
+  flow = {}
+  for i = 1, gridsize do
+    flow[i] = {}
+    for j = 1, gridsize do
+      flow[i][j] = {filled = 0, from = BLOCKED}
+    end
+  end
+
+  posx = startx
+  posy = starty
+  amtleft = flowamt
+  from = UP
+
+  while amtleft > 0 do
+    flow[posx][posy] = {filled = math.min(amtleft, 1), from = from}
+    amtleft = amtleft - flow[posx][posy].filled
+
+    if amtleft > 0 then
+      dest = grid[posx][posy].kind(from)
+      if dest == RIGHT then
+        posx = posx + 1
+        from = LEFT
+      elseif dest == LEFT then
+        posx = posx - 1
+        from = RIGHT
+      elseif dest == UP then
+        posy = posy - 1
+        from = DOWN
+      elseif dest == DOWN then
+        posy = posy + 1
+        from = UP
+      end
+
+      if (posx < 1 or posx > gridsize or posy < 1 or posy > gridsize) or
+         grid[posx][posy].hidden or
+         grid[posx][posy].kind(from) == BLOCKED then
+        game_over = true
+        return
+      end
+    end
+  end
+
 end
 
 function love.draw()
   love.graphics.setColor(black)
   love.graphics.clear()
 
+  if game_over then
+    love.graphics.setColor(white)
+    love.graphics.print('GAME OVER', 200, 200)
+    return
+  end
+
   for i = 1, gridsize do
     for j = 1, gridsize do
-      drawtile(grid[i][j], i, j)
+      drawtile(grid[i][j], i, j, flow[i][j].filled, flow[i][j].from)
     end
   end
 
