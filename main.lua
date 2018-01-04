@@ -14,20 +14,14 @@ function love.load()
   -- FIXME: start / end at other positions
   startx = 2
   starty = 1
-  endx = gridsize
-  endy = gridsize
 
   flowamt = 0 -- in tiles (fractional)
   flowspeed = 0.2 -- in tiles / second
 
   whatfont = love.graphics.newFont(48)
   love.graphics.setFont(whatfont)
-  fontheight = whatfont:getHeight()
-  fontwhatwidth = whatfont:getWidth('?')
 
   swapfont = love.graphics.newFont(32)
-  swapheight = swapfont:getHeight()
-  swapwidth = swapfont:getWidth('swap')
 
   BLOCKED = 0
   LEFT = 1
