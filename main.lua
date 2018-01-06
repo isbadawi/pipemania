@@ -27,7 +27,7 @@ function love.load()
   DOWN = 3
   UP = 4
 
-  local connector = function(a, b)
+  local function connector(a, b)
     return function(direction)
       if direction == a then return b end
       if direction == b then return a end
