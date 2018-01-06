@@ -18,9 +18,7 @@ function love.load()
   flowamt = 0 -- in tiles (fractional)
   flowspeed = 0.2 -- in tiles / second
 
-  whatfont = love.graphics.newFont(48)
-  love.graphics.setFont(whatfont)
-
+  whatfont = love.graphics.setNewFont(48)
   swapfont = love.graphics.newFont(32)
 
   BLOCKED = 0
