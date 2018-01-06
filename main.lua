@@ -29,7 +29,7 @@ function love.load()
   DOWN = 3
   UP = 4
 
-  function connector(a, b)
+  local connector = function(a, b)
     return function(direction)
       if direction == a then return b end
       if direction == b then return a end
@@ -93,7 +93,7 @@ function love.keypressed(key)
 end
 
 function pixels(i)
-  size = margin + (i - 1) * tilesize
+  local size = margin + (i - 1) * tilesize
   -- FIXME hack
   if i > gridsize then
     size = size + margin
@@ -102,9 +102,9 @@ function pixels(i)
 end
 
 function printcentered(text, xpos, ypos)
-  font = love.graphics.getFont()
-  width = font:getWidth(text)
-  height = font:getHeight()
+  local font = love.graphics.getFont()
+  local width = font:getWidth(text)
+  local height = font:getHeight()
   love.graphics.print(
     text,
     xpos + (tilesize - width) / 2,
@@ -113,15 +113,15 @@ function printcentered(text, xpos, ypos)
 end
 
 function drawtile(tile, i, j, filled, from)
-  xpos = pixels(i)
-  ypos = pixels(j)
+  local xpos = pixels(i)
+  local ypos = pixels(j)
 
   if not filled then
     filled = 0
   end
 
-  smallr = tilesize / 4
-  bigr = 3 * tilesize / 4
+  local smallr = tilesize / 4
+  local bigr = 3 * tilesize / 4
 
   if tile.hidden then
     love.graphics.setColor(white)
@@ -132,7 +132,7 @@ function drawtile(tile, i, j, filled, from)
       'fill', xpos, ypos + (tilesize / 4), tilesize, tilesize / 2)
 
     love.graphics.setColor(aquamarine)
-    fillwidth = tilesize * filled
+    local fillwidth = tilesize * filled
     if from == LEFT then
       love.graphics.rectangle(
         'fill', xpos, ypos + (tilesize / 4), fillwidth, tilesize / 2)
@@ -147,7 +147,7 @@ function drawtile(tile, i, j, filled, from)
       'fill', xpos + (tilesize / 4), ypos, tilesize / 2, tilesize)
 
     love.graphics.setColor(aquamarine)
-    fillheight = tilesize * filled
+    local fillheight = tilesize * filled
     if from == UP then
       love.graphics.rectangle(
         'fill', xpos + (tilesize / 4), ypos, tilesize / 2, fillheight)
@@ -157,6 +157,7 @@ function drawtile(tile, i, j, filled, from)
     end
 
   else
+    local centerx, centery, angfrom, angto
     if tile.kind == LEFTUP then
       centerx = xpos
       centery = ypos
@@ -229,17 +230,17 @@ function love.update(dt)
     end
   end
 
-  posx = startx
-  posy = starty
-  amtleft = flowamt
-  from = UP
+  local posx = startx
+  local posy = starty
+  local amtleft = flowamt
+  local from = UP
 
   while amtleft > 0 do
     flow[posx][posy] = {filled = math.min(amtleft, 1), from = from}
     amtleft = amtleft - flow[posx][posy].filled
 
     if amtleft > 0 then
-      dest = grid[posx][posy].kind(from)
+      local dest = grid[posx][posy].kind(from)
       if dest == RIGHT then
         posx = posx + 1
         from = LEFT
