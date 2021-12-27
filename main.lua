@@ -5,11 +5,11 @@ function love.load()
   gridsize = 6 -- tiles
   margin = 10 -- pixels
 
-  black = {0, 0, 0, 255}
-  white = {255, 255, 255, 255}
-  yellow = {255, 255, 0, 255}
-  grey = {105, 105, 105, 255}
-  aquamarine = {127, 255, 212, 255}
+  black = {0, 0, 0, 1}
+  white = {1, 1, 1, 1}
+  yellow = {1, 1, 0, 1}
+  grey = {105/255, 105/255, 105/255, 1}
+  aquamarine = {127/255, 1, 212/255, 1}
 
   -- FIXME: start / end at other positions
   startx = 2
